@@ -1,0 +1,123 @@
+# Runbook RAG: pgvector + OpenBao + RAG API + MCP server.
+#
+#   openbao ─(dynamic Postgres users, Anthropic key)─> api, ingest
+#   ingest ─(embeddings + text)─> postgres/pgvector <─(hybrid search)─ api <─ mcp <─ agents
+#
+# Up:   docker compose up -d --build        (first run builds images and downloads ~200 MB of models)
+# Down: docker compose down                  (add -v to delete all data, including OpenBao)
+#
+# Every port is published on 127.0.0.1 only. The only secrets in this file are LOCAL bootstrap values:
+# Host ports use the 47xxx range so this stack can run next to the other learning stacks.
+# the Postgres superuser password and bao_admin's *initial* password, which OpenBao rotates on first run.
+name: runbook-rag
+
+services:
+  openbao:
+    image: quay.io/openbao/openbao:2.5.4
+    # Create the static auto-unseal key on first start (stand-in for a cloud KMS key), then start the server.
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        mkdir -p /openbao/seal
+        [ -s /openbao/seal/unseal.key ] || head -c 32 /dev/urandom > /openbao/seal/unseal.key
+        chown -R openbao:openbao /openbao/seal /openbao/file && chmod 400 /openbao/seal/unseal.key
+        exec docker-entrypoint.sh bao server -config=/openbao/config/config.hcl
+    cap_add: [IPC_LOCK]
+    ports: ["127.0.0.1:47200:8200"]          # UI: http://localhost:47200/ui
+    volumes:
+      - ./openbao/config.hcl:/openbao/config/config.hcl:ro
+      - bao-data:/openbao/file
+      - bao-seal:/openbao/seal
+    healthcheck:
+      # "up and answering", whatever the init/seal state; bao-bootstrap waits for unsealed itself
+      test: ["CMD-SHELL", "wget -q -O /dev/null 'http://127.0.0.1:8200/v1/sys/health?uninitcode=200&sealedcode=200' || exit 1"]
+      interval: 3s
+      retries: 30
+    mem_limit: 256m
+
+  postgres:
+    image: pgvector/pgvector:0.8.3-pg18-trixie
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres-local-superuser      # LOCAL: break-glass only; apps never use it
+      BAO_ADMIN_INITIAL_PASSWORD: bao-admin-initial     # rotated by OpenBao on first bootstrap
+    command: ["postgres", "-c", "shared_buffers=256MB", "-c", "maintenance_work_mem=256MB",
+              "-c", "log_connections=on", "-c", "password_encryption=scram-sha-256"]
+    ports: ["127.0.0.1:47432:5432"]
+    volumes:
+      - pg-data:/var/lib/postgresql
+      - ./sql/00-init.sh:/docker-entrypoint-initdb.d/00-init.sh:ro
+      - ./sql:/sql:ro
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "rag"]
+      interval: 3s
+      retries: 30
+    mem_limit: 1g
+
+  # One-shot: initialise and configure OpenBao (idempotent). Re-run after editing .env or policies:
+  #   docker compose run --rm bao-bootstrap
+  bao-bootstrap:
+    build: { context: ., args: { GROUP: api } }
+    image: runbook-rag/api:dev
+    command: ["python", "-m", "rag.bao_bootstrap"]
+    environment:
+      BAO_ADDR: http://openbao:8200
+      BAO_ADMIN_INITIAL_PASSWORD: bao-admin-initial
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}         # from .env (git-ignored); stored in OpenBao
+    volumes:
+      - bao-init:/bootstrap/init
+      - bao-approle:/bootstrap/approle
+    depends_on:
+      openbao: { condition: service_healthy }
+      postgres: { condition: service_healthy }
+
+  # One-shot: chunk + embed + load the corpus. Re-run any time: docker compose run --rm ingest
+  ingest:
+    image: runbook-rag/api:dev
+    command: ["python", "-m", "rag.ingest"]
+    environment:
+      RAG_BAO_DB_ROLE: rag-writer
+    volumes:
+      - ./corpus:/app/corpus:ro              # edit runbooks on your laptop, re-run ingest; no rebuild
+      - { type: volume, source: bao-approle, target: /run/secrets/bao, read_only: true,
+          volume: { subpath: rag-ingest } }
+    depends_on:
+      bao-bootstrap: { condition: service_completed_successfully }
+    mem_limit: 1536m
+
+  api:
+    image: runbook-rag/api:dev
+    command: ["uvicorn", "rag.api:app", "--host", "0.0.0.0", "--port", "8100", "--no-access-log"]
+    ports: ["127.0.0.1:47100:8100"]           # Swagger UI: http://localhost:47100/docs
+    environment:
+      RAG_BAO_DB_ROLE: rag-reader
+    volumes:
+      - { type: volume, source: bao-approle, target: /run/secrets/bao, read_only: true,
+          volume: { subpath: rag-api } }
+    depends_on:
+      bao-bootstrap: { condition: service_completed_successfully }
+      ingest: { condition: service_completed_successfully }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8100/readyz')"]
+      interval: 5s
+      retries: 30
+    mem_limit: 1536m
+
+  mcp:
+    build: { context: ., args: { GROUP: mcp } }
+    image: runbook-rag/mcp:dev
+    command: ["python", "mcp_server/server.py", "--transport", "http", "--port", "8101"]
+    ports: ["127.0.0.1:47101:8101"]           # MCP endpoint: http://localhost:47101/mcp
+    environment:
+      MCP_RAG_API_URL: http://api:8100
+    depends_on:
+      api: { condition: service_healthy }
+    mem_limit: 256m
+
+volumes:
+  pg-data:
+  bao-data:
+  bao-seal:
+  bao-init:
+  bao-approle:

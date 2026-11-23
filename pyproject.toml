@@ -1,0 +1,45 @@
+[project]
+name = "runbook-rag"
+version = "0.1.0"
+description = "Learn RAG and vector search: EC2 ops runbooks in pgvector, hybrid search, reranking, evals, Claude answers with citations, secrets in OpenBao"
+requires-python = ">=3.13,<3.14"
+dependencies = []
+
+# One project, several deployables (same pattern as learn-ai-agent). Each image installs only its group:
+#   uv sync --locked --no-default-groups --group api
+[dependency-groups]
+core = [
+    "pydantic-settings>=2.11",
+    "httpx>=0.28",
+    "psycopg[binary]>=3.3",
+    "psycopg-pool>=3.3",
+    "pgvector>=0.5",
+    "fastembed>=0.8.1",
+    "anthropic>=1.11,<2",
+]
+api = [
+    { include-group = "core" },
+    "fastapi>=0.142",
+    "uvicorn[standard]>=0.54",
+]
+mcp = [
+    { include-group = "core" },
+    "mcp>=2.3.0",
+]
+dev = [
+    "pytest>=8.4",
+    "ruff>=0.14",
+    { include-group = "api" },
+    { include-group = "mcp" },
+]
+
+[tool.uv]
+default-groups = ["dev"]
+package = false
+
+[tool.ruff]
+line-length = 120
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

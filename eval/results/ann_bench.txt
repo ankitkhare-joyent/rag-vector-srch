@@ -1,0 +1,12 @@
+loaded 20,000 x 384-dim vectors in 1.0s, table 33 MB
+
+method                                       recall@10   p50 ms  index MB
+exact (sequential scan)                          1.000     20.6         -
+HNSW m=16, ef_search=10                          0.970      1.5        41
+HNSW m=16, ef_search=20                          0.978      1.8        41
+HNSW m=16, ef_search=40                          0.978      1.8        41
+HNSW m=16, ef_search=100                         1.000      2.1        41
+HNSW m=16, ef_search=200                         1.000      2.2        41
+   (HNSW build took 14.5s)
+HNSW on halfvec (16-bit), ef_search=40           0.998      2.6        23
+binary quantised HNSW + exact re-rank of 100     0.994      2.1         7

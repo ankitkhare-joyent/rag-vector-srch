@@ -1,0 +1,11 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+# never commit secrets or OpenBao material
+*.key
+*.pem
+init.json
+**/approle/

@@ -1,0 +1,36 @@
+{"id": "q01", "category": "lexical", "question": "What does VcpuLimitExceeded mean and how do I fix it?", "relevant": ["RB-020"], "facts": ["quota", "request-service-quota-increase"]}
+{"id": "q02", "category": "lexical", "question": "Which quota code covers running on-demand standard instances?", "relevant": ["RB-020", "GUIDE-019"], "facts": ["L-1216C47A"]}
+{"id": "q03", "category": "lexical", "question": "What should HttpPutResponseHopLimit be on EKS nodes?", "relevant": ["POL-SEC-004"], "facts": ["2"]}
+{"id": "q04", "category": "lexical", "question": "InsufficientInstanceCapacity when launching p4d.24xlarge in us-east-1a", "relevant": ["RB-004"], "facts": ["Availability Zone", "Capacity Block"]}
+{"id": "q05", "category": "lexical", "question": "What is the quota code for P instances?", "relevant": ["RB-020"], "facts": ["L-417A185B"]}
+{"id": "q06", "category": "lexical", "question": "How do I handle an instance-retirement scheduled event?", "relevant": ["RB-021"], "facts": ["stop and start"]}
+{"id": "q07", "category": "lexical", "question": "What did postmortem PM-2026-05 find as the root cause?", "relevant": ["PM-2026-05"], "facts": ["ISM"]}
+{"id": "q08", "category": "lexical", "question": "What does StatusCheckFailed_System mean?", "relevant": ["RB-001"], "facts": ["stop", "start", "hardware"]}
+{"id": "q09", "category": "lexical", "question": "Which tag is used to exempt a GPU training run from the 72 hour auto-stop?", "relevant": ["RB-014"], "facts": ["LongRun"]}
+{"id": "q10", "category": "lexical", "question": "What is the coverage target in POL-COST-002?", "relevant": ["POL-COST-002"], "facts": ["70%"]}
+{"id": "q11", "category": "semantic", "question": "The search cluster's data disks are almost full, what do I do right now?", "relevant": ["RB-002", "PM-2026-05"], "facts": ["modify-volume", "xfs_growfs"]}
+{"id": "q12", "category": "semantic", "question": "How can I get a shell on a production box without SSH keys?", "relevant": ["RB-008"], "facts": ["start-session"]}
+{"id": "q13", "category": "semantic", "question": "Our nightly Spark jobs keep losing machines halfway through, how do we make them more reliable?", "relevant": ["RB-003"], "facts": ["instance types", "price-capacity-optimized"]}
+{"id": "q14", "category": "semantic", "question": "How do I tell if a server is too big for what it does?", "relevant": ["GUIDE-010"], "facts": ["p95", "20%"]}
+{"id": "q15", "category": "semantic", "question": "Developers are complaining their builds wait a long time before starting", "relevant": ["RB-013"], "facts": ["MaxSize"]}
+{"id": "q16", "category": "semantic", "question": "Is it safe to reboot a Kafka machine to move it onto healthy hardware?", "relevant": ["RB-012"], "facts": ["instance store", "replicat"]}
+{"id": "q17", "category": "semantic", "question": "How much cheaper are Arm instances and what breaks when moving to them?", "relevant": ["GUIDE-009"], "facts": ["20 to 30%", "exec format error"]}
+{"id": "q18", "category": "semantic", "question": "A Kubernetes worker stopped reporting to the control plane, what's the procedure?", "relevant": ["RB-011"], "facts": ["drain", "cordon"]}
+{"id": "q19", "category": "semantic", "question": "Who decides on the severity when production is down and how do I start an incident?", "relevant": ["GUIDE-024"], "facts": ["/incident declare"]}
+{"id": "q20", "category": "semantic", "question": "We deleted data by accident on a volume, how do we get it back?", "relevant": ["RB-025"], "facts": ["snapshot", "same Availability Zone"]}
+{"id": "q21", "category": "semantic", "question": "What do the letters in r7gd.4xlarge mean?", "relevant": ["GUIDE-026"], "facts": ["memory", "Graviton", "NVMe"]}
+{"id": "q22", "category": "semantic", "question": "Checkout got slow right after we rolled out a new machine image, has this happened before?", "relevant": ["PM-2026-03"], "facts": ["MinHealthyPercentage", "huge pages"]}
+{"id": "q23", "category": "semantic", "question": "Can I open port 22 to the internet for a quick debug session?", "relevant": ["POL-SEC-007"], "facts": ["Session Manager"]}
+{"id": "q24", "category": "semantic", "question": "What labels must every VM carry for cost allocation?", "relevant": ["POL-TAG-001"], "facts": ["CostCenter", "Team"]}
+{"id": "q25", "category": "semantic", "question": "How often are base images rebuilt and how old can they get in production?", "relevant": ["RB-017"], "facts": ["30 days"]}
+{"id": "q26", "category": "semantic", "question": "How did we shut down the old Windows reporting servers?", "relevant": ["RB-018"], "facts": ["snapshot", "14 days"]}
+{"id": "q27", "category": "semantic", "question": "The PgBouncer boxes in front of the payments database are failing health checks", "relevant": ["RB-023"], "facts": ["Do not terminate"]}
+{"id": "q28", "category": "semantic", "question": "What did we learn from opening the Singapore region?", "relevant": ["GUIDE-019"], "facts": ["quota", "6 days"]}
+{"id": "q29", "category": "multi", "question": "Scaling out CI fails with launch errors. Is it a quota or an AWS capacity problem, and what do I do for each?", "relevant": ["RB-013", "RB-004", "RB-020"], "facts": ["VcpuLimitExceeded", "InsufficientInstanceCapacity"]}
+{"id": "q30", "category": "multi", "question": "Before buying Savings Plans for a fleet, what cost work should happen first?", "relevant": ["POL-COST-002", "GUIDE-009", "GUIDE-010"], "facts": ["Graviton", "rightsizing"]}
+{"id": "q31", "category": "multi", "question": "An i4i Kafka broker got an AWS retirement notice. What exactly do I do?", "relevant": ["RB-021", "RB-012"], "facts": ["broker.id", "under-replicated"]}
+{"id": "q32", "category": "multi", "question": "Why can pods on EKS not reach instance metadata after we enforced IMDSv2?", "relevant": ["POL-SEC-004", "RB-011"], "facts": ["hop limit", "2"]}
+{"id": "q33", "category": "unanswerable", "question": "How do I rotate the TLS certificate on the internal load balancer?", "relevant": [], "facts": []}
+{"id": "q34", "category": "unanswerable", "question": "What is the on-call phone number for the payments team?", "relevant": [], "facts": []}
+{"id": "q35", "category": "unanswerable", "question": "How do I configure cross-region replication for our DynamoDB tables?", "relevant": [], "facts": []}
+{"id": "q36", "category": "unanswerable", "question": "What's the process for upgrading Kafka to version 4?", "relevant": [], "facts": []}

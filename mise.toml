@@ -1,0 +1,48 @@
+[tools]
+python = "3.13.16"
+uv = "0.12.22"
+"github:openbao/openbao" = "2.5.4"     # the `bao` CLI, same version as the server; used by the labs
+
+[env]
+_.file = ".env"
+BAO_ADDR = "http://localhost:47200"     # this stack's OpenBao (other labs use other ports)
+
+# mise run <task>   (mise tasks lists them)
+[tasks.setup]
+description = "Install Python dependencies from uv.lock"
+run = "uv sync --locked"
+
+[tasks.up]
+description = "Build if needed and start the stack: OpenBao + bootstrap, Postgres, ingest, API, MCP. Waits until healthy"
+run = "docker compose up -d --build --wait api mcp"
+
+[tasks.down]
+description = "Stop the stack, keeping its data (OpenBao auto-unseals on the next up)"
+run = "docker compose stop"
+
+[tasks.reset]
+description = "DELETE this stack's volumes: Postgres, OpenBao (data, seal key, root token, AppRole files). ./.env stays"
+run = "docker compose down -v --remove-orphans"
+
+[tasks.ingest]
+description = "Re-run the ingest job (only changed documents are re-embedded; add -- --full to re-embed all)"
+run = "docker compose run --rm ingest python -m rag.ingest"
+
+[tasks.bootstrap]
+description = "Re-run the idempotent OpenBao bootstrap (rewrites policies and roles, mints fresh secret_ids)"
+run = "docker compose run --rm bao-bootstrap 2>&1 | grep bao-bootstrap"
+
+[tasks.test]
+run = "uv run pytest -q"
+
+[tasks."eval:retrieval"]
+description = "Retrieval eval over the golden set (free, no LLM)"
+run = "uv run python -m eval.retrieval"
+
+[tasks."eval:answers"]
+description = "Answer eval with Claude: mise run eval:answers -- [--mode pipeline|agentic] [--limit N]"
+run = "uv run python -m eval.answers"
+
+[tasks."lab:mcp"]
+description = "Talk to the runbook MCP server like an MCP client would (lab/mcp_call.py; Lab 08)"
+run = "uv run python -m lab.mcp_call"
